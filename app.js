@@ -3,6 +3,7 @@ const LOG_KEY = 'cell_data_logs';
 const CHECK_INTERVAL = 10000; // 10 seconds for connectivity
 const GPS_INTERVAL = 60000;   // 60 seconds for GPS
 const STREAM_URL = 'https://ice6.somafm.com/groovesalad-128-mp3';
+const VIDEO_URL = 'https://raw.githubusercontent.com/Anarios/return-true--points-for-effort/master/720p.mp4';
 
 // Elements
 const startBtn = document.getElementById('startBtn');
@@ -22,9 +23,6 @@ let checkTimer = null;
 let gpsTimer = null;
 let lastGps = { lat: null, lon: null };
 
-// Silent video base64 (1x1 black frame, 1s) - Updated for high compatibility
-const SILENT_VIDEO_B64 = 'data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21hdmMxbXA0MgAAAAhZy19vAAADcm1vb3YAAABsbXZoZAAAAADbe6Z423umeNoAAAfQAAACmQABAAABAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAACNnRyYWsAAABcdGtoZAAAAADbe6Z423umeNoAAAABAAAAAAACmQAAAAAAAAAAAAAAAAAAAAEAAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAACBlZHRzAAAAHGVsc3QAAAAAAAAAAQAAApkAAAAAAAABAAAAAAG6bWRpYQAAACBtZGhkAAAAANt7pnjbe6Z40AAAC7gAAAIdAFV4AAAAAAAALWhkbHIAAAAAAAAAAHZpZGUAAAAAAAAAAAAAAABWaWRlb0hhbmRsZXIAAAABS21pbmYAAAAUdm1oZAAAAAEAAAAAAAAAAAAAACRkaW5mAAAAHGRyZWYAAAAAAAAAAQAAAA51cmwgAAAAAQAAASJzdGJsAAAAr3N0c2QAAAAAAAAAAQAAAJ9hdmMxAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAIAAgABIAAAASAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGP//AAAALWF2Y0MBQsAr/+EAF2eEAWLAsv4CAAAAAwAAAAEAAAMDAi8I6Y2YAAAACHByb2YAAAAAAAAAABhzdHRzAAAAAAAAAAEAAAABAAACmQAAABxzdHNjAAAAAAAAAAEAAAABAAAAAQAAAAEAAAAUc3RzeiAAAAAAAAAAAAAAAQAAABRzdGNvAAAAAAAAAAEAAAA4AAAAYnVkdGEAAABabWV0YQAAAAAAAAAhaGRscgAAAAAAAAAAbWRpdir6AAAALWlsc3QAAAAlqXRvbwAAAB1kYXRhAAAAAQAAAABMYXZmNTguMjkuMTAw';
-
 // Initialize
 function init() {
     loadLogsFromStorage();
@@ -37,8 +35,8 @@ function init() {
     exportBtn.addEventListener('click', exportLogs);
     clearBtn.addEventListener('click', clearLogs);
 
-    // Set video source
-    videoElem.src = SILENT_VIDEO_B64;
+    // Set media sources
+    videoElem.src = VIDEO_URL;
     audioElem.src = STREAM_URL;
 }
 
@@ -55,7 +53,7 @@ async function startTracking() {
     startBtn.innerText = 'Stop Tracking';
     startBtn.classList.add('active');
 
-    logToUI('--- Session Start (v1.0.5) ---');
+    logToUI('--- Session Start (v1.0.8) ---');
     logToUI('Requesting GPS and Media...');
 
     try {
@@ -92,7 +90,7 @@ async function startTracking() {
             // Start Intervals
             checkTimer = setInterval(checkConnectivity, CHECK_INTERVAL);
             gpsTimer = setInterval(logGPS, GPS_INTERVAL);
-        }, 500); // Increased delay
+        }, 500);
         
     } catch (err) {
         logToUI('CRITICAL INIT ERROR: ' + err.message);

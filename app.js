@@ -20,6 +20,7 @@ let isTracking = false;
 let checkTimer = null;
 let gpsTimer = null;
 let lastGps = { lat: null, lon: null };
+let wakeLock = null;
 
 // Initialize
 function init() {
@@ -50,19 +51,22 @@ async function startTracking() {
     startBtn.innerText = 'Stop Tracking';
     startBtn.classList.add('active');
 
-    logToUI('--- Session Start (v1.0.9) ---');
-    logToUI('Requesting GPS and Media...');
+    logToUI('--- Session Start (v1.1.0) ---');
+    logToUI('Requesting GPS, Media, and WakeLock...');
 
     try {
         // 1. Request GPS immediately
         logGPS();
 
-        // 2. Prime audio element (iOS Safari requirement)
+        // 2. Request Wake Lock (Keep Screen On)
+        requestWakeLock();
+
+        // 3. Prime audio element (iOS Safari requirement)
         logToUI('Priming audio...');
         audioElem.play().catch(e => console.log('Audio prime fail:', e));
         audioElem.pause();
 
-        // 3. Start actual playback
+        // 4. Start actual playback
         setTimeout(async () => {
             // Audio Test
             try {
@@ -86,12 +90,41 @@ async function startTracking() {
     }
 }
 
+async function requestWakeLock() {
+    if ('wakeLock' in navigator) {
+        try {
+            wakeLock = await navigator.wakeLock.request('screen');
+            logToUI('SUCCESS: Screen Wake Lock active');
+            
+            wakeLock.addEventListener('release', () => {
+                logToUI('Wake Lock was released');
+            });
+        } catch (err) {
+            logToUI('Wake Lock Error: ' + err.message);
+        }
+    } else {
+        logToUI('Wake Lock not supported by browser');
+    }
+}
+
+// Re-acquire wake lock if page is minimized/restored
+document.addEventListener('visibilitychange', async () => {
+    if (wakeLock !== null && document.visibilityState === 'visible' && isTracking) {
+        requestWakeLock();
+    }
+});
+
 function stopTracking() {
     isTracking = false;
     startBtn.innerText = 'Stop Tracking';
     startBtn.classList.remove('active');
 
     audioElem.pause();
+
+    if (wakeLock !== null) {
+        wakeLock.release();
+        wakeLock = null;
+    }
 
     clearInterval(checkTimer);
     clearInterval(gpsTimer);

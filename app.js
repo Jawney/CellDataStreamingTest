@@ -2,7 +2,7 @@
 const LOG_KEY = 'cell_data_logs';
 const CHECK_INTERVAL = 10000; // 10 seconds for connectivity
 const GPS_INTERVAL = 60000;   // 60 seconds for GPS
-const STREAM_URL = 'https://stream.live.vc.bbc.com/bbc_world_service';
+const STREAM_URL = 'https://ice6.somafm.com/groovesalad-128-mp3';
 
 // Elements
 const startBtn = document.getElementById('startBtn');
@@ -22,8 +22,8 @@ let checkTimer = null;
 let gpsTimer = null;
 let lastGps = { lat: null, lon: null };
 
-// Silent video base64 (1x1 black frame, 1s)
-const SILENT_VIDEO_B64 = 'data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21hdmMxbXA0MgAAAAhZy19vAAADcm1vb3YAAABsbXZoZAAAAADbe6Z423umeNoAAAfQAAACmQABAAABAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAACNnRyYWsAAABcdGtoZAAAAADbe6Z423umeNoAAAABAAAAAAACmQAAAAAAAAAAAAAAAAAAAAEAAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAACBlZHRzAAAAHGVsc3QAAAAAAAAAAQAAApkAAAAAAAABAAAAAAG6bWRpYQAAACBtZGhkAAAAANt7pnjbe6Z40AAAC7gAAAIdAFV4AAAAAAAALWhkbHIAAAAAAAAAAHZpZGUAAAAAAAAAAAAAAABWaWRlb0hhbmRsZXIAAAABS21pbmYAAAAUdm1oZAAAAAEAAAAAAAAAAAAAACRkaW5mAAAAHGRyZWYAAAAAAAAAAQAAAA51cmwgAAAAAQAAASJzdGJsAAAAr3N0c2QAAAAAAAAAAQAAAJ9hdmMxAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAIAAgABIAAAASAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGP//AAAALWF2Y0MBQsAr/+EAF2eEAWLAsv4CAAAAAwAAAAEAAAMDAi8I6Y2YAAAACHByb2YAAAAAAAAAABhzdHRzAAAAAAAAAAEAAAABAAACmQAAABxzdHNjAAAAAAAAAAEAAAABAAAAAQAAAAEAAAAUc3RzeiAAAAAAAAAAAAAAAQAAABRzdGNvAAAAAAAAAAEAAAA4AAAAYnVkdGEAAABabWV0YQAAAAAAAAAhaGRscgAAAAAAAAAAbWRpciAAAAAAAAAAAAAAAAAAAAAALWlsc3QAAAAlqXRvbwAAAB1kYXRhAAAAAQAAAABMYXZmNTguMjkuMTAw';
+// Silent video base64 (1x1 black frame, 1s) - Updated for high compatibility
+const SILENT_VIDEO_B64 = 'data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21hdmMxbXA0MgAAAAhZy19vAAADcm1vb3YAAABsbXZoZAAAAADbe6Z423umeNoAAAfQAAACmQABAAABAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAACNnRyYWsAAABcdGtoZAAAAADbe6Z423umeNoAAAABAAAAAAACmQAAAAAAAAAAAAAAAAAAAAEAAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAACBlZHRzAAAAHGVsc3QAAAAAAAAAAQAAApkAAAAAAAABAAAAAAG6bWRpYQAAACBtZGhkAAAAANt7pnjbe6Z40AAAC7gAAAIdAFV4AAAAAAAALWhkbHIAAAAAAAAAAHZpZGUAAAAAAAAAAAAAAABWaWRlb0hhbmRsZXIAAAABS21pbmYAAAAUdm1oZAAAAAEAAAAAAAAAAAAAACRkaW5mAAAAHGRyZWYAAAAAAAAAAQAAAA51cmwgAAAAAQAAASJzdGJsAAAAr3N0c2QAAAAAAAAAAQAAAJ9hdmMxAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAIAAgABIAAAASAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGP//AAAALWF2Y0MBQsAr/+EAF2eEAWLAsv4CAAAAAwAAAAEAAAMDAi8I6Y2YAAAACHByb2YAAAAAAAAAABhzdHRzAAAAAAAAAAEAAAABAAACmQAAABxzdHNjAAAAAAAAAAEAAAABAAAAAQAAAAEAAAAUc3RzeiAAAAAAAAAAAAAAAQAAABRzdGNvAAAAAAAAAAEAAAA4AAAAYnVkdGEAAABabWV0YQAAAAAAAAAhaGRscgAAAAAAAAAAbWRpdir6AAAALWlsc3QAAAAlqXRvbwAAAB1kYXRhAAAAAQAAAABMYXZmNTguMjkuMTAw';
 
 // Initialize
 function init() {
@@ -59,21 +59,7 @@ async function startTracking() {
 
     try {
         // 1. Request GPS immediately to trigger permission dialog
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    const { latitude, longitude } = pos.coords;
-                    lastGps = { lat: latitude.toFixed(6), lon: longitude.toFixed(6) };
-                    updateStatus('gps', `${lastGps.lat}, ${lastGps.lon}`, 'ok');
-                    logEntry('System', 'GPS Permission Granted');
-                },
-                (err) => {
-                    updateStatus('gps', 'Denied/Error', 'error');
-                    logToUI('GPS Error: ' + err.message);
-                },
-                { enableHighAccuracy: true, timeout: 5000 }
-            );
-        }
+        logGPS();
 
         // 2. Prime media elements (iOS Safari requirement)
         videoElem.play().catch(() => {});
@@ -82,7 +68,6 @@ async function startTracking() {
         audioElem.pause();
 
         // 3. Start actual playback
-        // We'll use a small timeout to let the UI thread breathe
         setTimeout(async () => {
             try {
                 await videoElem.play();
@@ -97,7 +82,6 @@ async function startTracking() {
             } catch (mediaErr) {
                 console.error('Media Start Error:', mediaErr);
                 logToUI('Media Error: ' + mediaErr.message);
-                // Don't stop tracking just for audio failure, the script might still run
             }
         }, 100);
         
@@ -125,7 +109,7 @@ function stopTracking() {
 
 function checkConnectivity() {
     const isOnline = navigator.onLine;
-    const streamState = audioElem.readyState; // 0=HAVE_NOTHING, 4=HAVE_ENOUGH_DATA
+    const streamState = audioElem.readyState; 
     const streamStalled = audioElem.paused || streamState < 3;
 
     updateStatus('net', isOnline ? 'Online' : 'Offline', isOnline ? 'ok' : 'error');
@@ -134,7 +118,6 @@ function checkConnectivity() {
     if (!isOnline || streamStalled) {
         logEntry('Alert', `Drop: Net=${isOnline}, Stream=${streamState}`);
         
-        // Attempt recovery
         if (isOnline && streamStalled) {
             audioElem.load();
             audioElem.play().catch(() => {});
@@ -143,6 +126,7 @@ function checkConnectivity() {
 }
 
 function logGPS() {
+    logToUI('Attempting GPS fix...');
     if (!navigator.geolocation) {
         updateStatus('gps', 'Not Supported', 'error');
         return;
@@ -153,17 +137,21 @@ function logGPS() {
             const { latitude, longitude, accuracy } = pos.coords;
             lastGps = { lat: latitude.toFixed(6), lon: longitude.toFixed(6) };
             updateStatus('gps', `${lastGps.lat}, ${lastGps.lon}`, 'ok');
-            
-            // Log with connectivity info
-            const status = navigator.onLine ? 'Online' : 'Offline';
-            logEntry('Data', `GPS: ${lastGps.lat},${lastGps.lon} | Net: ${status}`);
+            logToUI(`GPS Fix: ${lastGps.lat}, ${lastGps.lon}`);
+            logEntry('Data', `GPS Fix: ${lastGps.lat},${lastGps.lon} (±${accuracy.toFixed(1)}m)`);
         },
         (err) => {
             console.error('GPS Error:', err);
-            updateStatus('gps', 'Error: ' + err.code, 'error');
-            logEntry('Error', 'GPS Fetch Failed: ' + err.message);
+            let errMsg = 'Unknown Error';
+            if (err.code === 1) errMsg = 'Permission Denied';
+            if (err.code === 2) errMsg = 'Position Unavailable';
+            if (err.code === 3) errMsg = 'Timeout';
+            
+            updateStatus('gps', errMsg, 'error');
+            logToUI('GPS Failed: ' + errMsg);
+            logEntry('Error', 'GPS Fetch Failed: ' + errMsg);
         },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
 }
 

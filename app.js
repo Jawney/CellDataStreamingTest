@@ -66,24 +66,33 @@ async function startTracking() {
         videoElem.pause();
         audioElem.play().catch(() => {});
         audioElem.pause();
+// Start actual playback (Split into separate try/catches to isolate the error)
+setTimeout(async () => {
+// Try Video (Keep-Awake)
+try {
+await videoElem.play();
+logToUI('Keep-awake video active');
+} catch (vErr) {
+console.error('Video Error:', vErr);
+logToUI('Video Error: ' + vErr.message);
+// Note: If video fails, iOS might still allow the audio to keep the tab alive
+}
 
-        // 3. Start actual playback
-        setTimeout(async () => {
-            try {
-                await videoElem.play();
-                await audioElem.play();
-                
-                logToUI('Tracking active & Keep-awake on');
-                logEntry('System', 'Tracking Session Started');
+// Try Audio (Connectivity Heartbeat)
+try {
+await audioElem.play();
+logToUI('Audio stream active');
+} catch (aErr) {
+console.error('Audio Error:', aErr);
+logToUI('Audio Error: ' + aErr.message);
+}
 
-                // Start Intervals
-                checkTimer = setInterval(checkConnectivity, CHECK_INTERVAL);
-                gpsTimer = setInterval(logGPS, GPS_INTERVAL);
-            } catch (mediaErr) {
-                console.error('Media Start Error:', mediaErr);
-                logToUI('Media Error: ' + mediaErr.message);
-            }
-        }, 100);
+logEntry('System', 'Tracking Session Started');
+
+// Start Intervals
+checkTimer = setInterval(checkConnectivity, CHECK_INTERVAL);
+gpsTimer = setInterval(logGPS, GPS_INTERVAL);
+}, 100);
         
     } catch (err) {
         console.error('Initialization failed:', err);

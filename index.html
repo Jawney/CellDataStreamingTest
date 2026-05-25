@@ -29,6 +29,7 @@
             <button id="startBtn">Start Tracking</button>
             <button id="exportBtn">Export CSV</button>
             <button id="clearBtn">Clear All Logs</button>
+            <button onclick="location.reload(true)" style="background: #ccc; color: #333; font-size: 0.8rem; padding: 5px;">Force Reload</button>
         </div>
 
         <div class="log-section">
@@ -37,7 +38,7 @@
         </div>
 
         <div style="text-align: center; margin-top: 20px; font-size: 0.7rem; color: #999;">
-            Version: 1.0.5
+            Version: 1.0.6 (Cache Busted)
         </div>
 
         <!-- Hidden Media Elements for Keep-Awake & Monitoring -->
@@ -45,6 +46,11 @@
         <audio id="streamAudio" crossorigin="anonymous" class="hidden"></audio>
     </div>
 
-    <script src="app.js"></script>
+    <script>
+        // Inject script with timestamp to bypass GitHub Pages / Safari cache
+        const script = document.createElement('script');
+        script.src = 'app.js?v=' + Date.now();
+        document.body.appendChild(script);
+    </script>
 </body>
 </html>

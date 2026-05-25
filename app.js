@@ -55,48 +55,47 @@ async function startTracking() {
     startBtn.innerText = 'Stop Tracking';
     startBtn.classList.add('active');
 
+    logToUI('--- Session Start (v1.0.5) ---');
     logToUI('Requesting GPS and Media...');
 
     try {
-        // 1. Request GPS immediately to trigger permission dialog
+        // 1. Request GPS immediately
         logGPS();
 
         // 2. Prime media elements (iOS Safari requirement)
-        videoElem.play().catch(() => {});
+        logToUI('Priming media...');
+        videoElem.play().catch(e => console.log('Video prime fail:', e));
         videoElem.pause();
-        audioElem.play().catch(() => {});
+        audioElem.play().catch(e => console.log('Audio prime fail:', e));
         audioElem.pause();
-// Start actual playback (Split into separate try/catches to isolate the error)
-setTimeout(async () => {
-// Try Video (Keep-Awake)
-try {
-await videoElem.play();
-logToUI('Keep-awake video active');
-} catch (vErr) {
-console.error('Video Error:', vErr);
-logToUI('Video Error: ' + vErr.message);
-// Note: If video fails, iOS might still allow the audio to keep the tab alive
-}
 
-// Try Audio (Connectivity Heartbeat)
-try {
-await audioElem.play();
-logToUI('Audio stream active');
-} catch (aErr) {
-console.error('Audio Error:', aErr);
-logToUI('Audio Error: ' + aErr.message);
-}
+        // 3. Start actual playback (Separate try/catches)
+        setTimeout(async () => {
+            // Video Test
+            try {
+                await videoElem.play();
+                logToUI('SUCCESS: Video active');
+            } catch (vErr) {
+                logToUI('FAIL: Video (' + vErr.message + ')');
+            }
 
-logEntry('System', 'Tracking Session Started');
+            // Audio Test
+            try {
+                await audioElem.play();
+                logToUI('SUCCESS: Audio active');
+            } catch (aErr) {
+                logToUI('FAIL: Audio (' + aErr.message + ')');
+            }
 
-// Start Intervals
-checkTimer = setInterval(checkConnectivity, CHECK_INTERVAL);
-gpsTimer = setInterval(logGPS, GPS_INTERVAL);
-}, 100);
+            logEntry('System', 'Tracking Session Started');
+
+            // Start Intervals
+            checkTimer = setInterval(checkConnectivity, CHECK_INTERVAL);
+            gpsTimer = setInterval(logGPS, GPS_INTERVAL);
+        }, 500); // Increased delay
         
     } catch (err) {
-        console.error('Initialization failed:', err);
-        logToUI('Init Error: ' + err.message);
+        logToUI('CRITICAL INIT ERROR: ' + err.message);
         stopTracking();
     }
 }
@@ -150,7 +149,6 @@ function logGPS() {
             logEntry('Data', `GPS Fix: ${lastGps.lat},${lastGps.lon} (±${accuracy.toFixed(1)}m)`);
         },
         (err) => {
-            console.error('GPS Error:', err);
             let errMsg = 'Unknown Error';
             if (err.code === 1) errMsg = 'Permission Denied';
             if (err.code === 2) errMsg = 'Position Unavailable';

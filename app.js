@@ -34,7 +34,7 @@ function init() {
     exportBtn.addEventListener('click', exportLogs);
     clearBtn.addEventListener('click', clearLogs);
 
-    // Set audio source
+    // Initial source set
     audioElem.src = STREAM_URL;
 }
 
@@ -51,24 +51,26 @@ async function startTracking() {
     startBtn.innerText = 'Stop Tracking';
     startBtn.classList.add('active');
 
-    logToUI('--- Session Start (v1.1.0) ---');
+    logToUI('--- Session Start (v1.1.1) ---');
     logToUI('Requesting GPS, Media, and WakeLock...');
 
     try {
-        // 1. Request GPS immediately
+        // 1. Force Audio Reload to ensure it works on subsequent starts
+        audioElem.load();
+        
+        // 2. Request GPS immediately
         logGPS();
 
-        // 2. Request Wake Lock (Keep Screen On)
+        // 3. Request Wake Lock (Keep Screen On)
         requestWakeLock();
 
-        // 3. Prime audio element (iOS Safari requirement)
+        // 4. Prime audio element (iOS Safari requirement)
         logToUI('Priming audio...');
         audioElem.play().catch(e => console.log('Audio prime fail:', e));
         audioElem.pause();
 
-        // 4. Start actual playback
+        // 5. Start actual playback
         setTimeout(async () => {
-            // Audio Test
             try {
                 await audioElem.play();
                 logToUI('SUCCESS: Audio heartbeat active');
@@ -80,6 +82,8 @@ async function startTracking() {
             logEntry('System', 'Tracking Session Started');
 
             // Start Intervals
+            clearInterval(checkTimer); // Safety clear
+            clearInterval(gpsTimer);   // Safety clear
             checkTimer = setInterval(checkConnectivity, CHECK_INTERVAL);
             gpsTimer = setInterval(logGPS, GPS_INTERVAL);
         }, 500);
@@ -93,6 +97,9 @@ async function startTracking() {
 async function requestWakeLock() {
     if ('wakeLock' in navigator) {
         try {
+            // If already active, don't request again
+            if (wakeLock && !wakeLock.released) return;
+
             wakeLock = await navigator.wakeLock.request('screen');
             logToUI('SUCCESS: Screen Wake Lock active');
             
@@ -109,17 +116,21 @@ async function requestWakeLock() {
 
 // Re-acquire wake lock if page is minimized/restored
 document.addEventListener('visibilitychange', async () => {
-    if (wakeLock !== null && document.visibilityState === 'visible' && isTracking) {
+    if (document.visibilityState === 'visible' && isTracking) {
         requestWakeLock();
     }
 });
 
 function stopTracking() {
     isTracking = false;
-    startBtn.innerText = 'Stop Tracking';
+    startBtn.innerText = 'Start Tracking';
     startBtn.classList.remove('active');
 
     audioElem.pause();
+    // Clear source to help mobile browsers release resources
+    audioElem.src = '';
+    audioElem.load();
+    audioElem.src = STREAM_URL;
 
     if (wakeLock !== null) {
         wakeLock.release();

@@ -55,24 +55,55 @@ async function startTracking() {
     startBtn.innerText = 'Stop Tracking';
     startBtn.classList.add('active');
 
-    try {
-        // iOS requires user interaction to play
-        await videoElem.play();
-        await audioElem.play();
-        
-        logToUI('Tracking started');
-        logEntry('System', 'Tracking Session Started');
+    logToUI('Requesting GPS and Media...');
 
-        // Start Intervals
-        checkTimer = setInterval(checkConnectivity, CHECK_INTERVAL);
-        gpsTimer = setInterval(logGPS, GPS_INTERVAL);
-        
-        // Initial GPS
-        logGPS();
+    try {
+        // 1. Request GPS immediately to trigger permission dialog
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    const { latitude, longitude } = pos.coords;
+                    lastGps = { lat: latitude.toFixed(6), lon: longitude.toFixed(6) };
+                    updateStatus('gps', `${lastGps.lat}, ${lastGps.lon}`, 'ok');
+                    logEntry('System', 'GPS Permission Granted');
+                },
+                (err) => {
+                    updateStatus('gps', 'Denied/Error', 'error');
+                    logToUI('GPS Error: ' + err.message);
+                },
+                { enableHighAccuracy: true, timeout: 5000 }
+            );
+        }
+
+        // 2. Prime media elements (iOS Safari requirement)
+        videoElem.play().catch(() => {});
+        videoElem.pause();
+        audioElem.play().catch(() => {});
+        audioElem.pause();
+
+        // 3. Start actual playback
+        // We'll use a small timeout to let the UI thread breathe
+        setTimeout(async () => {
+            try {
+                await videoElem.play();
+                await audioElem.play();
+                
+                logToUI('Tracking active & Keep-awake on');
+                logEntry('System', 'Tracking Session Started');
+
+                // Start Intervals
+                checkTimer = setInterval(checkConnectivity, CHECK_INTERVAL);
+                gpsTimer = setInterval(logGPS, GPS_INTERVAL);
+            } catch (mediaErr) {
+                console.error('Media Start Error:', mediaErr);
+                logToUI('Media Error: ' + mediaErr.message);
+                // Don't stop tracking just for audio failure, the script might still run
+            }
+        }, 100);
         
     } catch (err) {
-        console.error('Playback failed:', err);
-        logToUI('Error starting media: ' + err.message);
+        console.error('Initialization failed:', err);
+        logToUI('Init Error: ' + err.message);
         stopTracking();
     }
 }

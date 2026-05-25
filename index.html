@@ -38,7 +38,7 @@
         </div>
 
         <div style="text-align: center; margin-top: 20px; font-size: 0.7rem; color: #999;">
-            Version: 1.0.6 (Cache Busted)
+            Version: 1.0.7
         </div>
 
         <!-- Hidden Media Elements for Keep-Awake & Monitoring -->
@@ -46,11 +46,6 @@
         <audio id="streamAudio" crossorigin="anonymous" class="hidden"></audio>
     </div>
 
-    <script>
-        // Inject script with timestamp to bypass GitHub Pages / Safari cache
-        const script = document.createElement('script');
-        script.src = 'app.js?v=' + Date.now();
-        document.body.appendChild(script);
-    </script>
+    <script src="app.js?v=1.0.7"></script>
 </body>
 </html>

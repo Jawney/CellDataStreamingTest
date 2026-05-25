@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cell Data Logger</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Cell Data Logger</h1>
+
+        <div class="status-card">
+            <div class="status-item">
+                <span class="status-label">Network</span>
+                <span id="statusNet" class="status-value idle">Checking...</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Stream</span>
+                <span id="statusStream" class="status-value idle">Idle</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">GPS</span>
+                <span id="statusGPS" class="status-value idle">Waiting...</span>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="startBtn">Start Tracking</button>
+            <button id="exportBtn">Export CSV</button>
+            <button id="clearBtn">Clear All Logs</button>
+        </div>
+
+        <div class="log-section">
+            <h2>Recent Activity</h2>
+            <div id="logEntries"></div>
+        </div>
+
+        <!-- Hidden Media Elements for Keep-Awake & Monitoring -->
+        <video id="keepAwakeVideo" muted loop playsinline class="hidden"></video>
+        <audio id="streamAudio" crossorigin="anonymous" class="hidden"></audio>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

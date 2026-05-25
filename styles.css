@@ -1,0 +1,155 @@
+:root {
+    --bg-color: #f4f4f9;
+    --text-color: #333;
+    --primary-color: #007bff;
+    --success-color: #28a745;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --card-bg: #fff;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    padding: 20px;
+}
+
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+}
+
+.status-card {
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.status-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.status-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.status-label {
+    font-weight: bold;
+}
+
+.status-value {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.status-value.ok { background-color: var(--success-color); color: white; }
+.status-value.error { background-color: var(--danger-color); color: white; }
+.status-value.warning { background-color: var(--warning-color); color: black; }
+.status-value.idle { background-color: #6c757d; color: white; }
+
+.controls {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+button {
+    padding: 16px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+button:active {
+    opacity: 0.8;
+}
+
+#startBtn {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+#startBtn.active {
+    background-color: var(--danger-color);
+    content: "Stop Tracking";
+}
+
+#exportBtn {
+    background-color: var(--success-color);
+    color: white;
+}
+
+#clearBtn {
+    background-color: transparent;
+    color: var(--danger-color);
+    border: 1px solid var(--danger-color);
+    padding: 10px;
+    font-size: 0.9rem;
+}
+
+.log-section {
+    background: var(--card-bg);
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.log-section h2 {
+    font-size: 1rem;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+}
+
+#logEntries {
+    font-family: monospace;
+    font-size: 0.85rem;
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #eee;
+    padding: 10px;
+    background: #fafafa;
+}
+
+.log-entry {
+    margin-bottom: 5px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.log-entry:last-child {
+    border-bottom: none;
+}
+
+.hidden {
+    display: none;
+}

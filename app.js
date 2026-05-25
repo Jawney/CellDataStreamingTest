@@ -3,14 +3,12 @@ const LOG_KEY = 'cell_data_logs';
 const CHECK_INTERVAL = 10000; // 10 seconds for connectivity
 const GPS_INTERVAL = 60000;   // 60 seconds for GPS
 const STREAM_URL = 'https://ice6.somafm.com/groovesalad-128-mp3';
-const VIDEO_URL = 'https://raw.githubusercontent.com/Anarios/return-true--points-for-effort/master/720p.mp4';
 
 // Elements
 const startBtn = document.getElementById('startBtn');
 const exportBtn = document.getElementById('exportBtn');
 const clearBtn = document.getElementById('clearBtn');
 const logEntries = document.getElementById('logEntries');
-const videoElem = document.getElementById('keepAwakeVideo');
 const audioElem = document.getElementById('streamAudio');
 
 const statusNet = document.getElementById('statusNet');
@@ -35,8 +33,7 @@ function init() {
     exportBtn.addEventListener('click', exportLogs);
     clearBtn.addEventListener('click', clearLogs);
 
-    // Set media sources
-    videoElem.src = VIDEO_URL;
+    // Set audio source
     audioElem.src = STREAM_URL;
 }
 
@@ -53,35 +50,26 @@ async function startTracking() {
     startBtn.innerText = 'Stop Tracking';
     startBtn.classList.add('active');
 
-    logToUI('--- Session Start (v1.0.8) ---');
+    logToUI('--- Session Start (v1.0.9) ---');
     logToUI('Requesting GPS and Media...');
 
     try {
         // 1. Request GPS immediately
         logGPS();
 
-        // 2. Prime media elements (iOS Safari requirement)
-        logToUI('Priming media...');
-        videoElem.play().catch(e => console.log('Video prime fail:', e));
-        videoElem.pause();
+        // 2. Prime audio element (iOS Safari requirement)
+        logToUI('Priming audio...');
         audioElem.play().catch(e => console.log('Audio prime fail:', e));
         audioElem.pause();
 
-        // 3. Start actual playback (Separate try/catches)
+        // 3. Start actual playback
         setTimeout(async () => {
-            // Video Test
-            try {
-                await videoElem.play();
-                logToUI('SUCCESS: Video active');
-            } catch (vErr) {
-                logToUI('FAIL: Video (' + vErr.message + ')');
-            }
-
             // Audio Test
             try {
                 await audioElem.play();
-                logToUI('SUCCESS: Audio active');
+                logToUI('SUCCESS: Audio heartbeat active');
             } catch (aErr) {
+                console.error('Audio Error:', aErr);
                 logToUI('FAIL: Audio (' + aErr.message + ')');
             }
 
@@ -100,10 +88,9 @@ async function startTracking() {
 
 function stopTracking() {
     isTracking = false;
-    startBtn.innerText = 'Start Tracking';
+    startBtn.innerText = 'Stop Tracking';
     startBtn.classList.remove('active');
 
-    videoElem.pause();
     audioElem.pause();
 
     clearInterval(checkTimer);
@@ -147,6 +134,7 @@ function logGPS() {
             logEntry('Data', `GPS Fix: ${lastGps.lat},${lastGps.lon} (±${accuracy.toFixed(1)}m)`);
         },
         (err) => {
+            console.error('GPS Error:', err);
             let errMsg = 'Unknown Error';
             if (err.code === 1) errMsg = 'Permission Denied';
             if (err.code === 2) errMsg = 'Position Unavailable';
